@@ -9,7 +9,6 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
-from typing import NamedTuple
 import torch.nn as nn
 import torch
 from . import _C
@@ -154,22 +153,47 @@ class _RasterizeGaussians(torch.autograd.Function):
 
         return grads
 
-class GaussianRasterizationSettings(NamedTuple):
-    image_height: int
-    image_width: int 
-    tanfovx : float
-    tanfovy : float
-    bg : torch.Tensor
-    scale_modifier : float
-    viewmatrix : torch.Tensor
-    projmatrix : torch.Tensor
-    sh_degree : int
-    campos : torch.Tensor
-    prefiltered : bool
-    debug : bool
-    # Compatibility shim for callers from newer forks that pass `kernel_size`.
-    # The current backend ignores this value.
-    kernel_size: float = 0.0
+class GaussianRasterizationSettings:
+    """Rasterization settings with forward-compatible keyword handling."""
+
+    def __init__(
+        self,
+        image_height: int,
+        image_width: int,
+        tanfovx: float,
+        tanfovy: float,
+        bg: torch.Tensor,
+        scale_modifier: float,
+        viewmatrix: torch.Tensor,
+        projmatrix: torch.Tensor,
+        sh_degree: int,
+        campos: torch.Tensor,
+        prefiltered: bool,
+        debug: bool,
+        kernel_size: float = 0.0,
+        subpixel_offset=None,
+        **kwargs
+    ):
+        self.image_height = image_height
+        self.image_width = image_width
+        self.tanfovx = tanfovx
+        self.tanfovy = tanfovy
+        self.bg = bg
+        self.scale_modifier = scale_modifier
+        self.viewmatrix = viewmatrix
+        self.projmatrix = projmatrix
+        self.sh_degree = sh_degree
+        self.campos = campos
+        self.prefiltered = prefiltered
+        self.debug = debug
+        # Compatibility shims for callers from newer forks. The current backend
+        # ignores these values.
+        self.kernel_size = kernel_size
+        self.subpixel_offset = subpixel_offset
+        # Accept additional keyword args for compatibility. They are not used by
+        # this backend, but storing them avoids instantiation failures.
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 class GaussianRasterizer(nn.Module):
     def __init__(self, raster_settings):
