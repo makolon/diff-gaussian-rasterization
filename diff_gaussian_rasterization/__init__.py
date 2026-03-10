@@ -167,6 +167,9 @@ class GaussianRasterizationSettings(NamedTuple):
     campos : torch.Tensor
     prefiltered : bool
     debug : bool
+    # Compatibility shim for callers from newer forks that pass `kernel_size`.
+    # The current backend ignores this value.
+    kernel_size: float = 0.0
 
 class GaussianRasterizer(nn.Module):
     def __init__(self, raster_settings):
@@ -218,4 +221,3 @@ class GaussianRasterizer(nn.Module):
             cov3D_precomp,
             raster_settings, 
         )
-
